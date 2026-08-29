@@ -8,119 +8,112 @@
   @page { size: A4 portrait; margin: 0; }
 
   :root {
-    --purple: #1a0b2e;
+    --purple:  #1a0b2e;
     --purple2: #2d1b4e;
-    --gold: #d4a017;
-    --rani: #e0407a;
-    --grey: #6e647d;
+    --gold:    #d4a017;
+    --rani:    #e0407a;
+    --grey:    #6e647d;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html, body { background: #eceaf1; }
 
   body {
-    background: #f2f0f5;
     font-family: 'Nirmala UI', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', sans-serif;
     display: flex;
     justify-content: center;
-    padding: 24px;
+    padding: 10mm;
     color: var(--purple);
   }
 
   .sheet {
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
     background: #fff;
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow: hidden;
     box-shadow: 0 6px 40px rgba(26, 11, 46, 0.18);
   }
 
+  /* ---- brand band ---- */
   .band {
     width: 100%;
-    background: linear-gradient(160deg, var(--purple2), var(--purple));
+    background: linear-gradient(160deg, var(--purple2) 0%, var(--purple) 100%);
     color: #fff;
     text-align: center;
-    padding: 26mm 10mm 12mm;
+    padding: 17mm 10mm 11mm;
   }
   .band h1 {
-    font-size: 26mm;
+    font-size: 23mm;
     font-weight: 700;
-    line-height: 1.05;
-    letter-spacing: 0.5mm;
+    line-height: 1.12;
   }
   .band .sub {
-    margin-top: 5mm;
-    font-size: 5mm;
-    letter-spacing: 3.2mm;
+    margin-top: 4mm;
+    font-size: 4.4mm;
+    letter-spacing: 3mm;
+    text-indent: 3mm;
     color: var(--gold);
     font-weight: 600;
-    text-indent: 3.2mm;
   }
 
+  /* ---- QR ---- */
   .qrwrap {
-    margin: 16mm 0 0;
-    padding: 7mm;
-    border: 1.1mm solid var(--gold);
-    border-radius: 6mm;
+    margin-top: 13mm;
+    padding: 6mm;
+    border: 1mm solid var(--gold);
+    border-radius: 5mm;
     background: #fff;
   }
   .qrwrap img {
     display: block;
-    width: 108mm;
-    height: 108mm;
-    image-rendering: pixelated;   /* keeps QR modules crisp */
+    width: 102mm;
+    height: 102mm;
+    image-rendering: pixelated;   /* keeps the QR modules hard-edged */
   }
 
-  .steps {
-    margin-top: 14mm;
-    text-align: center;
-    padding: 0 16mm;
-  }
-  .steps .big {
-    font-size: 8.5mm;
-    font-weight: 600;
-    line-height: 1.5;
-  }
-  .steps .small {
-    margin-top: 6mm;
-    font-size: 6mm;
-    color: var(--grey);
-    line-height: 1.6;
-  }
+  /* ---- instructions ---- */
+  .steps { margin-top: 11mm; text-align: center; padding: 0 14mm; }
+  .steps .big   { font-size: 7.8mm; font-weight: 600; line-height: 1.45; }
+  .steps .small { margin-top: 5mm; font-size: 5.4mm; color: var(--grey); line-height: 1.55; }
   .steps .small b { color: var(--rani); font-weight: 700; }
 
   .rule {
-    width: 60mm;
-    height: 0.8mm;
-    background: var(--gold);
-    border-radius: 1mm;
-    margin: 12mm auto 0;
+    width: 55mm; height: 0.7mm;
+    background: var(--gold); border-radius: 1mm;
+    margin: 9mm auto 0;
   }
 
   .url {
-    margin-top: 7mm;
+    margin-top: 5mm;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 4.6mm;
+    font-size: 4.4mm;
     color: var(--grey);
-    letter-spacing: 0.15mm;
-    word-break: break-all;
     text-align: center;
-    padding: 0 12mm;
   }
 
   .foot {
     margin-top: auto;
     width: 100%;
     text-align: center;
-    padding: 8mm;
-    font-size: 4mm;
+    background: #f6f4f9;
+    border-top: 0.3mm solid #e3dfea;
+    padding: 5mm;
+    font-size: 4.2mm;
     color: var(--grey);
   }
 
   @media print {
-    body { background: #fff; padding: 0; }
-    .sheet { box-shadow: none; width: 100%; min-height: 100vh; }
+    html, body { background: #fff; }
+    body { padding: 0; display: block; }
+    .sheet { box-shadow: none; width: 210mm; height: 297mm; }
   }
 </style>
 </head>
@@ -139,8 +132,8 @@
   <div class="steps">
     <div class="big">फ़ोन का कैमरा खोलिए<br>और यह QR स्कैन कीजिए</div>
     <div class="small">
-      खुलने के बाद <b>Add to Home screen</b> दबाइए —<br>
-      फ़ोन में app का icon बन जाएगा
+      App खुलने के बाद <b>Add to Home screen</b> दबाइए —<br>
+      फ़ोन में icon बन जाएगा, रोज़ वहीं से खोलिए
     </div>
   </div>
 
