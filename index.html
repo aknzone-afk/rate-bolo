@@ -69,6 +69,112 @@
 </style>
 </head>
 <body>
+
+<!-- ===== QR PASS =====
+     QR scan karne pe URL mein ?k=<KEY> aata hai. Us waqt se 1 ghanta
+     app chalta hai. Ghanta pura hote hi apne aap band ho jata hai aur
+     dobara nahi khulta - jab tak QR phir se scan na ho.
+-->
+<style>
+  #qrgate {
+    position: fixed; inset: 0; z-index: 99999;
+    background: linear-gradient(160deg, #2d1b4e, #1a0b2e);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 26px;
+    font-family: 'Nirmala UI', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #fff;
+  }
+  #qrgate.on { display: flex; }
+  #qrgate .lock { font-size: 62px; line-height: 1; margin-bottom: 18px; }
+  #qrgate h2 { font-size: 30px; font-weight: 700; color: #d4a017; margin-bottom: 14px; }
+  #qrgate p  { font-size: 18px; line-height: 1.65; color: #cfc6dd; max-width: 330px; }
+  #qrgate .hint {
+    margin-top: 26px; font-size: 15px; color: #8a7aa8;
+    border-top: 1px solid #3d2a5e; padding-top: 16px;
+  }
+  #qrleft {
+    position: fixed; top: 6px; left: 8px; z-index: 900;
+    font-size: 11px; color: #8a7aa8;
+    font-family: 'Nirmala UI', system-ui, sans-serif;
+    pointer-events: none;
+  }
+  #qrleft.warn { color: #e0407a; font-weight: 700; }
+</style>
+
+<div id="qrgate">
+  <div class="lock">🔒</div>
+  <h2>समय पूरा हुआ</h2>
+  <p>एक घंटा ख़त्म हो गया है।<br>चालू करने के लिए दुकान वाला<br><b style="color:#fff">QR दोबारा स्कैन कीजिए</b>।</p>
+  <div class="hint">रेट बोलो · B.B SYNTHETICS</div>
+</div>
+
+<div id="qrleft"></div>
+
+<script>
+(function () {
+  var KEY     = '8a1e0f76dc1c8af5';
+  var WINDOW  = 60 * 60 * 1000;      // 1 ghanta
+  var STORE   = 'rb_pass_start';
+
+  var gate = document.getElementById('qrgate');
+  var pill = document.getElementById('qrleft');
+
+  function lock() {
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    if (pill) pill.textContent = '';
+    gate.classList.add('on');
+    // bolna band karo, warna band hone ke baad bhi rate bolta rahega
+    try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
+  // 1. QR se aaya kya? URL mein ?k= ya #k=
+  var given = null;
+  try {
+    var q = new URLSearchParams(location.search).get('k');
+    var h = (location.hash || '').match(/(?:^#|&)k=([^&]+)/);
+    given = q || (h ? h[1] : null);
+  } catch (e) {}
+
+  if (given === KEY) {
+    try { localStorage.setItem(STORE, String(Date.now())); } catch (e) {}
+    // key ko URL se hata do, taaki koi bookmark/copy na kar le
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  }
+
+  // 2. Session bacha hai ya nahi
+  var start = 0;
+  try { start = parseInt(localStorage.getItem(STORE) || '0', 10) || 0; } catch (e) {}
+
+  var left = start ? (start + WINDOW - Date.now()) : -1;
+  // aage ki date (phone ka time badla hua) bhi galat maano
+  if (start > Date.now() + 60000) left = -1;
+
+  if (left <= 0) { lock(); return; }
+
+  // 3. Chalu hai - ginti dikhao aur theek samay pe band kar do
+  setTimeout(lock, left);
+
+  function tick() {
+    var ms = start + WINDOW - Date.now();
+    if (ms <= 0) { lock(); return; }
+    var m = Math.ceil(ms / 60000);
+    pill.textContent = '⏳ ' + m + ' मिनट';
+    pill.className = m <= 10 ? 'warn' : '';
+  }
+  tick();
+  setInterval(tick, 15000);
+
+  // phone jeb se nikalte hi dobara jaanch lo
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      if (start + WINDOW - Date.now() <= 0) lock(); else tick();
+    }
+  });
+})();
+</script>
+<!-- ===== QR PASS end ===== -->
+
   <div id="box">
     <span id="ver">V24</span>
     <div id="row1"><span id="dno">—</span><span id="rate">—</span></div>
