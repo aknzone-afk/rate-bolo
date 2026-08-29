@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1a0b2e">
 <title>रेट बोलो</title>
+
+<!-- phone pe app ki tarah install hone ke liye -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="रेट बोलो">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
   html,body { height:100%; }
@@ -304,6 +313,17 @@ getWL();
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'){ getWL(); loadLive(); }
 });
+</script>
+
+<script>
+// service worker - isse app install ho pata hai aur net na ho to bhi khulta hai
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (e) {
+      console.log('sw register fail', e);
+    });
+  });
+}
 </script>
 </body>
 </html>
