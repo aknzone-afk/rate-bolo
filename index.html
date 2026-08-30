@@ -223,6 +223,16 @@ var RATES = {"1444":{"r":840,"d":"1444"},"2857":{"r":540,"d":"2857"},"3151":{"r"
 // fetch - no cross-site permission needed. If it fails for any reason the
 // baked-in list above keeps working, so the app never goes dead.
 var RELOAD_MS = 30*60*1000;
+// Rate sirf subah 10:00 se raat 8:30 ke beech hi badalte hain (script bhi
+// usi waqt chalta hai). Us se bahar baar-baar poochhne ka koi fayda nahi -
+// bas phone ka data kharch hota hai. App kholte waqt hamesha ek baar
+// poochh lete hain, taaki taaza list turant mil jaye.
+var START_MIN = 10*60;        // 10:00
+var END_MIN   = 20*60 + 30;   // 20:30
+function kaamKaSamay(){
+  var d = new Date(), m = d.getHours()*60 + d.getMinutes();
+  return m >= START_MIN && m <= END_MIN;
+}
 function markData(when){
   var v=document.getElementById('ver');
   if(v && when) v.textContent = 'V24 \u00b7 ' + when;
@@ -240,8 +250,8 @@ function loadLive(){
     })
     .catch(function(){});
 }
-loadLive();
-setInterval(loadLive, RELOAD_MS);
+loadLive();                                    // app khulte hi, samay chahe jo ho
+setInterval(function(){ if(kaamKaSamay()) loadLive(); }, RELOAD_MS);
 
 var PFX = {};
 (function(){ for(var k in RATES){ for(var i=1;i<k.length;i++){ PFX[k.slice(0,i)]=1; } } })();
