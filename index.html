@@ -113,9 +113,11 @@
 
 <script>
 (function () {
-  var KEY     = '8a1e0f76dc1c8af5';
-  var WINDOW  = 60 * 60 * 1000;      // 1 ghanta
-  var STORE   = 'rb_pass_start';
+  var KEY_HOUR    = '8a1e0f76dc1c8af5';   // dukaan wala QR - 1 ghanta
+  var KEY_FOREVER = 'e8f0f23e66532a9c';   // maalik wala QR - hamesha
+  var WINDOW      = 60 * 60 * 1000;       // 1 ghanta
+  var STORE       = 'rb_pass_start';
+  var FOREVER     = 'rb_pass_forever';
 
   var gate = document.getElementById('qrgate');
   var pill = document.getElementById('qrleft');
@@ -136,13 +138,25 @@
     given = q || (h ? h[1] : null);
   } catch (e) {}
 
-  if (given === KEY) {
-    try { localStorage.setItem(STORE, String(Date.now())); } catch (e) {}
+  function stripKey() {
     // key ko URL se hata do, taaki koi bookmark/copy na kar le
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
 
-  // 2. Session bacha hai ya nahi
+  if (given === KEY_FOREVER) {
+    try { localStorage.setItem(FOREVER, '1'); } catch (e) {}
+    stripKey();
+  } else if (given === KEY_HOUR) {
+    try { localStorage.setItem(STORE, String(Date.now())); } catch (e) {}
+    stripKey();
+  }
+
+  // 2a. Maalik wali chaabi lag chuki hai? To kabhi taala nahi lagega.
+  var forever = false;
+  try { forever = localStorage.getItem(FOREVER) === '1'; } catch (e) {}
+  if (forever) { pill.textContent = ''; return; }
+
+  // 2b. Ghante wala session bacha hai ya nahi
   var start = 0;
   try { start = parseInt(localStorage.getItem(STORE) || '0', 10) || 0; } catch (e) {}
 
