@@ -8,7 +8,7 @@
    Warna har ghante ka update phone tak pahunchega hi nahi.
 */
 
-const VERSION = 'rate-bolo-v1';
+const VERSION = 'rate-bolo-v2';
 const SHELL = [
   './',
   './index.html',
@@ -59,7 +59,7 @@ self.addEventListener('fetch', (e) => {
 
   // rates.json - hamesha pehle net. Query string (?t=...) hata kar cache karte
   // hain, warna har baar naya key banega aur offline kabhi match hi nahi hoga.
-  if (url.pathname.endsWith('/rates.json')) {
+  if (url.pathname.endsWith('/rates.json') || url.pathname.endsWith('/photos.json')) {
     e.respondWith(networkFirst(req, url.origin + url.pathname));
     return;
   }
