@@ -170,22 +170,32 @@
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
 
+  // Kuch phone mein yaaddasht (localStorage) band hoti hai - private window,
+  // ya QR camera/WhatsApp ka apna chhota browser. Wahan likhna fail ho jata
+  // tha aur pehli hi baar "समय पूरा हुआ" dikh raha tha. Isliye chaabi is
+  // page ke liye yahin yaad rakhte hain - likhna chale ya na chale.
+  var memStart = 0, memForever = false;
+
   if (given === KEY_FOREVER) {
+    memForever = true;
     try { localStorage.setItem(FOREVER, '1'); } catch (e) {}
     stripKey();
   } else if (given === KEY_HOUR) {
-    try { localStorage.setItem(STORE, String(Date.now())); } catch (e) {}
+    memStart = Date.now();
+    try { localStorage.setItem(STORE, String(memStart)); } catch (e) {}
     stripKey();
   }
 
   // 2a. Maalik wali chaabi lag chuki hai? To kabhi taala nahi lagega.
-  var forever = false;
-  try { forever = localStorage.getItem(FOREVER) === '1'; } catch (e) {}
+  var forever = memForever;
+  try { forever = forever || localStorage.getItem(FOREVER) === '1'; } catch (e) {}
   if (forever) { pill.textContent = ''; return; }
 
   // 2b. Ghante wala session bacha hai ya nahi
-  var start = 0;
-  try { start = parseInt(localStorage.getItem(STORE) || '0', 10) || 0; } catch (e) {}
+  var start = memStart;                       // abhi-abhi QR scan hua ho to wahi sahi
+  if (!start) {
+    try { start = parseInt(localStorage.getItem(STORE) || '0', 10) || 0; } catch (e) {}
+  }
 
   var left = start ? (start + WINDOW - Date.now()) : -1;
   // aage ki date (phone ka time badla hua) bhi galat maano
