@@ -127,6 +127,19 @@
     pointer-events: none;
   }
   #qrleft.warn { color: #e0407a; font-weight: 700; }
+
+  #stale {
+    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 8000;
+    background: #e0407a; color: #fff; text-align: center;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    font-family: 'Nirmala UI', system-ui, sans-serif; line-height: 1.45;
+    box-shadow: 0 -4px 18px rgba(0,0,0,.35);
+  }
+  #stale.on { display: block; }
+  #stale b { font-size: 17px; display: block; }
+  #stale span { font-size: 14px; opacity: .95; }
+  #stale small { display: block; font-size: 12px; opacity: .85; margin-top: 2px; }
+  #ver.old { color: #e0407a !important; font-weight: 700; }
 </style>
 
 <div id="qrgate">
@@ -137,6 +150,15 @@
 </div>
 
 <div id="qrleft"></div>
+
+<!-- Purane rate ki chetavni. 24-Oct: ek phone ne net na milne par
+     September ke rate dikha diye the, aur unhe aaj ka samajh liya gaya.
+     Galat rate bolna paise ka nuksan hai - isliye ab saaf dikhta hai. -->
+<div id="stale" onclick="location.reload()">
+  <b>⚠️ ये रेट पुराने हैं</b>
+  <span id="staleWhen"></span>
+  <small>इंटरनेट चेक कीजिए — दबाकर दोबारा कोशिश कीजिए</small>
+</div>
 
 <script>
 (function () {
@@ -285,9 +307,34 @@ function kaamKaSamay(){
   var d = new Date(), m = d.getHours()*60 + d.getMinutes();
   return m >= START_MIN && m <= END_MIN;
 }
+var STALE_HOURS = 5;          // itne ghante se purana = chetavni
+
+// "dd/MM HH:mm" ko tareekh banao. Saal likha nahi hota, isliye agar aage ki
+// tareekh ban jaye (31/12 ko 01/01 padhna) to ek saal peeche kar dete hain.
+function parseWhen(w){
+  var m = /^(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/.exec(String(w||'').trim());
+  if(!m) return null;
+  var now = new Date();
+  var d = new Date(now.getFullYear(), +m[2]-1, +m[1], +m[3], +m[4]);
+  if(d.getTime() - now.getTime() > 7*24*3600*1000) d.setFullYear(now.getFullYear()-1);
+  return d;
+}
+
 function markData(when){
-  var v=document.getElementById('ver');
+  var v = document.getElementById('ver');
   if(v && when) v.textContent = 'V24 \u00b7 ' + when;
+
+  var box = document.getElementById('stale');
+  var d = parseWhen(when);
+  var hrs = d ? (Date.now() - d.getTime())/3600000 : 999;
+  var old = !d || hrs > STALE_HOURS;
+
+  if(v) v.className = old ? 'old' : '';
+  if(box){
+    box.classList.toggle('on', old);
+    document.getElementById('staleWhen').textContent =
+      d ? ('आख़िरी बार: ' + when) : '';
+  }
 }
 function loadLive(){
   if(typeof fetch!=='function') return;
@@ -300,7 +347,13 @@ function loadLive(){
       RATES = j.rates;
       markData(j.updated||'');
     })
-    .catch(function(){});
+    .catch(function(){
+      // Net ne jawab nahi diya. Jo rate abhi dikh rahe hain wo phone ke
+      // andar pade purane rate ho sakte hain - isliye chup mat raho.
+      var v = document.getElementById('ver');
+      var w = v ? (v.textContent||'').replace('V24 \u00b7 ','') : '';
+      markData(w);
+    });
 }
 loadLive();                                    // app khulte hi, samay chahe jo ho
 setInterval(function(){ if(kaamKaSamay()) loadLive(); }, RELOAD_MS);
