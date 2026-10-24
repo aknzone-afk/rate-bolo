@@ -128,18 +128,6 @@
   }
   #qrleft.warn { color: #e0407a; font-weight: 700; }
 
-  #stale {
-    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 8000;
-    background: #e0407a; color: #fff; text-align: center;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-    font-family: 'Nirmala UI', system-ui, sans-serif; line-height: 1.45;
-    box-shadow: 0 -4px 18px rgba(0,0,0,.35);
-  }
-  #stale.on { display: block; }
-  #stale b { font-size: 17px; display: block; }
-  #stale span { font-size: 14px; opacity: .95; }
-  #stale small { display: block; font-size: 12px; opacity: .85; margin-top: 2px; }
-  #ver.old { color: #e0407a !important; font-weight: 700; }
 </style>
 
 <div id="qrgate">
@@ -151,14 +139,6 @@
 
 <div id="qrleft"></div>
 
-<!-- Purane rate ki chetavni. 24-Oct: ek phone ne net na milne par
-     September ke rate dikha diye the, aur unhe aaj ka samajh liya gaya.
-     Galat rate bolna paise ka nuksan hai - isliye ab saaf dikhta hai. -->
-<div id="stale" onclick="location.reload()">
-  <b>⚠️ ये रेट पुराने हैं</b>
-  <span id="staleWhen"></span>
-  <small>इंटरनेट चेक कीजिए — दबाकर दोबारा कोशिश कीजिए</small>
-</div>
 
 <script>
 (function () {
@@ -296,7 +276,8 @@ var RATES = {"1444":{"r":840,"d":"1444"},"2857":{"r":540,"d":"2857"},"3151":{"r"
 // rates.json sits next to this page in the same repo, so this is a same-origin
 // fetch - no cross-site permission needed. If it fails for any reason the
 // baked-in list above keeps working, so the app never goes dead.
-var RELOAD_MS = 30*60*1000;
+var RELOAD_MS = 10*60*1000;   // har 10 min - list jitni taaza, utna achha
+var netFail = 0;
 // Rate sirf subah 10:00 se raat 8:30 ke beech hi badalte hain (script bhi
 // usi waqt chalta hai). Us se bahar baar-baar poochhne ka koi fayda nahi -
 // bas phone ka data kharch hota hai. App kholte waqt hamesha ek baar
@@ -307,34 +288,15 @@ function kaamKaSamay(){
   var d = new Date(), m = d.getHours()*60 + d.getMinutes();
   return m >= START_MIN && m <= END_MIN;
 }
-var STALE_HOURS = 5;          // itne ghante se purana = chetavni
-
-// "dd/MM HH:mm" ko tareekh banao. Saal likha nahi hota, isliye agar aage ki
-// tareekh ban jaye (31/12 ko 01/01 padhna) to ek saal peeche kar dete hain.
-function parseWhen(w){
-  var m = /^(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/.exec(String(w||'').trim());
-  if(!m) return null;
-  var now = new Date();
-  var d = new Date(now.getFullYear(), +m[2]-1, +m[1], +m[3], +m[4]);
-  if(d.getTime() - now.getTime() > 7*24*3600*1000) d.setFullYear(now.getFullYear()-1);
-  return d;
-}
-
+// Maalik ka niyam (24-Oct): "agar rate verify na ho sake to jo LAST
+// update hai usi ke hisaab se rate batao." Yaani app kabhi mana nahi
+// karega, kabhi khaali nahi dikhega - jo aakhri list mili thi, usi se
+// jawab dega. Isliye niche ka saara zor EK hi baat par hai: list ko
+// jitna ho sake utna taaza rakhna, taaki "aakhri list" hamesha aaj ki ho.
+// Kone mein uski tareekh+samay dikhta rehta hai.
 function markData(when){
   var v = document.getElementById('ver');
   if(v && when) v.textContent = 'V24 \u00b7 ' + when;
-
-  var box = document.getElementById('stale');
-  var d = parseWhen(when);
-  var hrs = d ? (Date.now() - d.getTime())/3600000 : 999;
-  var old = !d || hrs > STALE_HOURS;
-
-  if(v) v.className = old ? 'old' : '';
-  if(box){
-    box.classList.toggle('on', old);
-    document.getElementById('staleWhen').textContent =
-      d ? ('आख़िरी बार: ' + when) : '';
-  }
 }
 function loadLive(){
   if(typeof fetch!=='function') return;
@@ -345,18 +307,25 @@ function loadLive(){
       var n=0; for(var k in j.rates){ if(j.rates.hasOwnProperty(k)) n++; }
       if(n<100) throw 0;                 // half-written or broken file - ignore it
       RATES = j.rates;
+      rebuildPrefix();
       markData(j.updated||'');
+      netFail = 0;
     })
     .catch(function(){
-      // Net ne jawab nahi diya. Jo rate abhi dikh rahe hain wo phone ke
-      // andar pade purane rate ho sakte hain - isliye chup mat raho.
-      var v = document.getElementById('ver');
-      var w = v ? (v.textContent||'').replace('V24 \u00b7 ','') : '';
-      markData(w);
+      // Net ne jawab nahi diya - koi baat nahi, aakhri list se kaam
+      // chalta rahega. Par chupchaap dobara koshish karte raho, pehle
+      // jaldi-jaldi phir thoda rukh kar, taaki net aate hi list taaza ho.
+      netFail++;
+      var gap = Math.min(20000 * netFail, 3*60*1000);
+      setTimeout(function(){ loadLive(); }, gap);
     });
 }
 loadLive();                                    // app khulte hi, samay chahe jo ho
-setInterval(function(){ if(kaamKaSamay()) loadLive(); }, RELOAD_MS);
+setInterval(function(){ loadLive(); }, RELOAD_MS);
+window.addEventListener('online', function(){ netFail = 0; loadLive(); });
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') loadLive();   // jeb se nikalte hi
+});
 
 // ---------- design photos ----------
 // photos.json: { p: { "5277": ["hash1","hash2"] } } -> p/5277_hash1.jpg
@@ -443,7 +412,11 @@ window.addEventListener('keydown', function(e){
 });
 
 var PFX = {};
-(function(){ for(var k in RATES){ for(var i=1;i<k.length;i++){ PFX[k.slice(0,i)]=1; } } })();
+function rebuildPrefix(){
+  PFX = {};
+  for(var k in RATES){ for(var i=1;i<k.length;i++){ PFX[k.slice(0,i)]=1; } }
+}
+rebuildPrefix();
 
 var elBox=document.getElementById('box'), elD=document.getElementById('dno'),
     elR=document.getElementById('rate'), elT=document.getElementById('tag'),
