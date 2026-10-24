@@ -8,7 +8,7 @@
    Warna har ghante ka update phone tak pahunchega hi nahi.
 */
 
-const VERSION = 'rate-bolo-v2';
+const VERSION = 'rate-bolo-v3';
 const SHELL = [
   './',
   './index.html',
