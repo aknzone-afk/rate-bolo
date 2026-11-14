@@ -128,6 +128,23 @@
   }
   #qrleft.warn { color: #e0407a; font-weight: 700; }
 
+  /* ---- "bana raha / stock" ka button aur patti ---- */
+  #mkBtn {
+    position: absolute; top: 6px; left: 8px; z-index: 50;
+    width: 34px; height: 34px; padding: 0; line-height: 1;
+    border: 1px solid #3d2a5e; border-radius: 10px;
+    background: #2d1b4e; color: #d4a017; font-size: 17px;
+  }
+  #mkBtn.on { background: #d4a017; color: #1a0b2e; border-color: #d4a017; }
+  #mkRow { display: none; gap: 18px; justify-content: center; align-items: flex-end; }
+  #mkRow.on { display: flex; }
+  #mkRow .mk { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  #mkRow .mk i { font-style: normal; font-size: 12px; color: #8a7aa8; letter-spacing: .5px; }
+  #mkRow .mk b { font-size: clamp(30px, 11vw, 54px); font-variant-numeric: tabular-nums; }
+  #mkRow .mk:first-child b { color: #e0407a; }
+  #mkRow .mk:last-child  b { color: #d4a017; }
+  #box.mkmode #row1 .rate-hide { display: none; }
+
 </style>
 
 <div id="qrgate">
@@ -245,7 +262,9 @@
 
   <div id="box">
     <span id="ver">V24</span>
+    <button id="mkBtn" type="button" aria-label="बन रहा / स्टॉक">📦</button>
     <div id="row1"><span id="dno">—</span><span id="rate">—</span></div>
+    <div id="mkRow"><span class="mk"><i>बन रहा</i><b id="mkMake">—</b></span><span class="mk"><i>स्टॉक</i><b id="mkStock">—</b></span></div>
     <div id="tag" class="ok">नंबर दबाइए</div>
   </div>
   <div id="wrap">
@@ -326,6 +345,41 @@ window.addEventListener('online', function(){ netFail = 0; loadLive(); });
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState === 'visible') loadLive();   // jeb se nikalte hi
 });
+
+// ---------- bana raha / stock ----------
+// making.json: { d: { "1444": [banRaha, stock] } } - din mein ek baar
+// banti hai (task "Rate Bolo Making Export", 14:05). Rate ki tarah hi
+// seedhi same-origin file hai. Na mile to button chup rehta hai.
+var MK = {}, mkMode = false, mkAsOf = '';
+function loadMaking(){
+  if(typeof fetch!=='function') return;
+  fetch('making.json?t='+Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(j){ if(j && j.d){ MK = j.d; mkAsOf = j.updated||''; } })
+    .catch(function(){});
+}
+loadMaking();
+setInterval(function(){ loadMaking(); }, 60*60*1000);
+
+var mkBtn = document.getElementById('mkBtn');
+var mkRow = document.getElementById('mkRow');
+function mkShow(key){
+  var v = MK[key];
+  document.getElementById('mkMake').textContent  = v ? v[0] : '—';
+  document.getElementById('mkStock').textContent = v ? v[1] : '—';
+}
+function mkToggle(){
+  mkMode = !mkMode;
+  mkBtn.classList.toggle('on', mkMode);
+  mkRow.classList.toggle('on', mkMode);
+  elBox.classList.toggle('mkmode', mkMode);
+  elR.style.display = mkMode ? 'none' : '';      // rate ki jagah dono aankde
+  elT.className = 'ok';
+  elT.textContent = mkMode ? 'बन रहा / स्टॉक — नंबर दबाइए'
+                           : (fired ? '' : 'नंबर दबाइए');
+  if(mkMode && fired && firedVal) mkShow(firedVal);
+}
+mkBtn.addEventListener('click', mkToggle);
 
 // ---------- design photos ----------
 // photos.json: { p: { "5277": ["hash1","hash2"] } } -> p/5277_hash1.jpg
@@ -432,6 +486,7 @@ function showHit(h){
   missShown=false;
   elD.textContent=h.display||h.key;
   elR.textContent='₹'+h.rate;
+  if(mkMode) mkShow(h.key);
   fitRow((h.display||h.key).length);
   elT.className='ok'; elT.textContent='';
   elBox.classList.remove('flash'); void elBox.offsetWidth; elBox.classList.add('flash');
